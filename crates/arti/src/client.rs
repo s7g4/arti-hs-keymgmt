@@ -56,10 +56,6 @@ use tor_proto::stream::{DataStream, StreamParameters};
 use futures::lock::Mutex as AsyncMutex;
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
-use tor_rtcompat::Runtime;
-use crate::config::SystemConfig;
-use crate::TorAddr; // Added import for TorAddr
-use crate::rpc::{ClientConnectionError, resolve_with_prefs}; // Added import for ClientConnectionError and resolve_with_prefs
 
 /// Represents a circuit in the Tor network.
 #[derive(Debug, Clone)]
@@ -92,7 +88,7 @@ impl Default for BootstrapBehavior {
 }
 
 /// Represents a unique identifier for a circuit.
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct CircuitId(String);
 
 /// Represents the status of a circuit.
@@ -111,15 +107,7 @@ pub struct InertTorClient {
 }
 
 /// Represents the status of a client.
-
-/// Represents the dormant mode for the client.
 #[derive(Debug)]
-pub struct DormantMode {
-    is_active: bool,         // Indicates whether the dormant mode is currently active
-    last_active_time: u64,  // Timestamp of the last time the client was active
-    timeout_duration: u64,   // Duration after which the client should automatically enter dormant mode if inactive
-}
-#[derive(Debug, Clone)]
 pub enum ClientStatus {
     Active,
     Inactive,
@@ -132,7 +120,8 @@ pub struct TorClient<R: Runtime> {
     client_isolation: IsolationToken,
     connect_prefs: StreamPrefs,
     memquota: Arc<MemoryQuotaTracker>,
-    // Removed guardmgr and dirmgr_store as they are not used
+    guardmgr: GuardMgr<R>,
+    dirmgr_store: DirMgrStore<R>,
     addrcfg: Arc<MutCfg<ClientAddrConfig>>,
     timeoutcfg: Arc<MutCfg<StreamTimeoutConfig>>,
     reconfigure_lock: Arc<Mutex<()>>,
@@ -143,7 +132,7 @@ pub struct TorClient<R: Runtime> {
 
 impl<R: Runtime> TorClient<R> {
     /// Creates a new Tor client.
-    pub fn new(runtime: R, system_config: SystemConfig) -> Self {
+    pub fn new(runtime: R) -> Self {
         TorClient {
             runtime,
             client_isolation: IsolationToken::new(),
@@ -151,8 +140,9 @@ impl<R: Runtime> TorClient<R> {
                 max_streams: 10,
                 timeout: 300,
             },
-            memquota: Arc::new(MemoryQuotaTracker::new(system_config.memory)),
-            // Removed guardmgr and dirmgr_store as they are not used
+            memquota: Arc::new(MemoryQuotaTracker::new()),
+            guardmgr: GuardMgr::new(),
+            dirmgr_store: DirMgrStore::new(),
             addrcfg: Arc::new(MutCfg::default()),
             timeoutcfg: Arc::new(MutCfg::default()),
             reconfigure_lock: Arc::new(Mutex::new(())),
@@ -163,10 +153,6 @@ impl<R: Runtime> TorClient<R> {
     }
 
     /// Returns the current status of the client.
-    pub fn bootstrap(&self) {
-        // Logic for bootstrapping the Tor client
-        println!("Bootstrapping the Tor client...");
-    }
     pub fn status(&self) -> String {
         format!(
             "Client Isolation: {:?}, Max Streams: {}, Timeout: {}",
@@ -185,63 +171,6 @@ impl<R: Runtime> TorClient<R> {
     }
 
     /// Closes a specified circuit.
-    pub struct ClientStatusInfo {
-    pub ready: bool,
-    pub fraction: f32,
-    pub blocked: Option<String>,
-}
-
-pub fn bootstrap_status(&self) -> ClientStatusInfo {
-        // Logic for checking bootstrap status
-        println!("Checking bootstrap status...");
-        
-        // Create and return a ClientStatusInfo instance
-        ClientStatusInfo {
-            ready: true, // Example value, replace with actual logic
-            fraction: 1.0, // Example value, replace with actual logic
-            blocked: None, // Example value, replace with actual logic
-        }
-    }
-
-    pub fn bootstrap_events(&self) -> impl Stream<Item = ClientStatusInfo> {
-        // Create a stream that emits bootstrap status updates
-        let (sender, receiver) = futures::channel::mpsc::channel::<ClientStatusInfo>(10);
-        
-        // Simulate sending updates (this should be replaced with actual logic)
-        let sender_clone = sender.clone();
-        tokio::spawn(async move {
-            loop {
-                // Here you would check the actual bootstrap status and send updates
-                let status = ClientStatusInfo {
-                    ready: true, // Example value
-                    fraction: 1.0, // Example value
-                    blocked: None, // Example value
-                };
-                sender_clone.send(status).await.unwrap();
-                tokio::time::sleep(tokio::time::Duration::from_secs(1)).await; // Simulate delay
-            }
-        });
-
-        receiver
-    }
-    }
-
-impl<R: Runtime> TorClient<R> {
-    pub fn isolated_client(&self) {
-        // Logic for isolated client
-        println!("Isolated client logic...");
-    }}
-
-    use tokio::time::{sleep, Duration}; // Added import for tokio time functions
-
-pub async fn connect_with_prefs(&self, target: &TorAddr, prefs: &StreamPrefs) -> Result<DataStream, Box<dyn ClientConnectionError>> { 
-        // Logic for connecting with preferences
-        println!("Connecting with preferences to {:?}", target);
-        
-        // Implement the connection logic here
-        // This is a placeholder for the actual connection logic
-        Ok(DataStream::new()) // Replace with actual DataStream creation
-    }
     pub fn close_circuit(&mut self, circuit_id: CircuitId) -> Result<(), String> {
         if let Some(circuit) = self.circuits.remove(&circuit_id) {
             // Logic to close the circuit (e.g., notify the circuit manager)
@@ -280,3 +209,4 @@ pub async fn connect_with_prefs(&self, target: &TorAddr, prefs: &StreamPrefs) ->
         println!("Authenticating client...");
         Ok(()) // Placeholder for actual authentication logic
     }
+}

@@ -1,0 +1,21 @@
+.\" Manpage for validation
+.TH VALIDATION 1 "October 2023" "1.0" "Validate Keys for Onion Services"
+.SH NAME
+validation \- Validate keys for onion services
+.SH SYNOPSIS
+.B validation
+[\-h] [\-\-json]
+.SH DESCRIPTION
+Validates keys for onion services. This command checks the integrity and correctness of the keys.
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Show help information.
+.TP
+.B \-\-json
+Output the result in JSON format for machine readability.
+.SH EXAMPLES
+.B validation check --keystore /path/to/keystore
+.B validation status --json
+.SH AUTHOR
+Written by Shaurya Gaur .

@@ -316,7 +316,6 @@ mod test {
     //! <!-- @@ end test lint list maintained by maint/add_warning @@ -->
 
     use super::*;
-    use crate::testing::tempdir;
 
     // Simple case: test creating and loading cookies.
     #[test]

@@ -3,15 +3,14 @@
 //! See the [`KeyMgr`] docs for more details.
 
 use crate::{
-    ArtiPath, BoxedKeystore, KeyCertificateSpecifier, KeyPath, KeyPathError, KeyPathInfo,
-    KeyPathInfoExtractor, KeyPathPattern, KeySpecifier, KeystoreCorruptionError, KeystoreId,
-    KeystoreSelector, Result,
+    BoxedKeystore, KeyPath, KeyPathError, KeyPathInfo, KeyPathInfoExtractor, KeyPathPattern,
+    KeySpecifier, KeystoreId, KeystoreSelector, Result,
 };
 
 use itertools::Itertools;
 use std::iter;
 use std::result::Result as StdResult;
-use tor_error::{bad_api_usage, internal, into_bad_api_usage};
+use tor_error::{bad_api_usage, internal};
 use tor_key_forge::{
     ItemType, Keygen, KeygenRng, KeystoreItemType, ToEncodableCert, ToEncodableKey,
 };
@@ -663,14 +662,11 @@ mod tests {
     use std::result::Result as StdResult;
     use std::str::FromStr;
     use std::sync::RwLock;
-    use std::time::{Duration, SystemTime};
+
     use tor_basic_utils::test_rng::testing_rng;
-    use tor_cert::CertifiedKey;
-    use tor_cert::Ed25519Cert;
-    use tor_key_forge::{
-        CertData, EncodableItem, ErasedKey, InvalidCertError, KeyType, KeystoreItem,
-    };
-    use tor_llcrypto::pk::ed25519::{self, Ed25519PublicKey as _};
+
+    use tor_key_forge::{EncodableItem, ErasedKey, InvalidCertError, KeyType, KeystoreItem};
+    use tor_llcrypto::pk::ed25519::{self};
 
     /// The type of "key" stored in the test key stores.
     #[derive(Clone, Debug)]

@@ -1,7 +1,7 @@
 #![doc = include_str!("../README.md")]
 // @@ begin lint list maintained by maint/add_warning @@
 #![allow(renamed_and_removed_lints)] // @@REMOVE_WHEN(ci_arti_stable)
-#![allow(unknown_lints)] // @@REMOVE_WHEN(ci_arti_nightly)
+#![allow(unknown_lints)] // @@REMOVE WHEN(ci_arti_nightly)
 #![warn(missing_docs)]
 #![warn(noop_method_call)]
 #![warn(unreachable_pub)]
@@ -53,12 +53,13 @@ mod objmap;
 mod session;
 mod stream;
 
-pub use connection::{auth::RpcAuthentication, Connection, ConnectionError};
-pub use mgr::RpcMgr;
-pub use session::RpcSession;
+pub use connection::{auth::RpcAuthentication, Connection, ConnectionError}; // Connection management utilities
+pub use mgr::RpcMgr; // Key manager for handling keys
+pub use session::RpcSession; // Session management utilities
 
-/// Return a list of RPC methods that will be needed to use `arti-rpcserver` with the given runtime.
+/// Returns a list of RPC methods that will be needed to use `arti-rpcserver` with the given runtime.
 pub fn rpc_methods<R: tor_rtcompat::Runtime>() -> Vec<tor_rpcbase::dispatch::InvokerEnt> {
+    // Retrieves RPC methods
     tor_rpcbase::invoker_ent_list![
         crate::stream::new_oneshot_client_on_client::<R>, //
     ]

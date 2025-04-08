@@ -1,0 +1,29 @@
+.TH ARTI-HSS-MIGRATE 1 "March 2025" "Arti Tor Project" "User Commands"
+.SH NAME
+arti-hss-migrate \- Migrate keys from C Tor to Arti.
+.SH SYNOPSIS
+.B arti hss migrate
+--c-tor-path <path> --arti-keystore <path>
+.SH DESCRIPTION
+The
+.B arti hss migrate
+command helps transition onion service operators from C Tor to Arti by converting their existing keys to the Arti format.
+
+.SH OPTIONS
+.TP
+.B \-\-c-tor-path <path>
+Path to the C Tor hidden service directory (e.g., ~/.tor/hidden_service).
+.TP
+.B \-\-arti-keystore <path>
+Path to the Arti keystore directory (e.g., ~/.arti/keystore).
+
+.SH EXAMPLES
+Migrate C Tor keys to Arti:
+.PP
+.EX
+$ arti hss migrate --c-tor-path ~/.tor/hidden_service --arti-keystore ~/.arti/keystore
+.EE
+.SH SEE ALSO
+arti-hss(1), arti-hss-list(1)
+.SH AUTHOR
+Written by Shaurya Gaur.

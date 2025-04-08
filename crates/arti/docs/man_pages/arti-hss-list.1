@@ -1,0 +1,30 @@
+.TH ARTI-HSS-LIST 1 "March 2025" "Arti Tor Project" "User Commands"
+.SH NAME
+arti-hss-list \- List keys and certificates in the configured keystore.
+.SH SYNOPSIS
+.B arti hss list
+[\-\-json]
+.SH DESCRIPTION
+The
+.B arti hss list
+command displays all available keys and certificates stored in the configured keystore.
+
+.SH OPTIONS
+.TP
+.B \-\-json
+Outputs the results in JSON format for easier scripting.
+.SH EXAMPLES
+List keys in the default keystore:
+.PP
+.EX
+$ arti hss list
+.EE
+List keys in JSON format:
+.PP
+.EX
+$ arti hss list --json
+.EE
+.SH SEE ALSO
+arti-hss(1), arti-hss-check(1)
+.SH AUTHOR
+Written by Shaurya Gaur.

@@ -1,0 +1,21 @@
+.\" Manpage for keys
+.TH KEYS 1 "October 2023" "1.0" "Manage Keys for Onion Services"
+.SH NAME
+keys \- Manage keys for onion services
+.SH SYNOPSIS
+.B keys
+[\-h] [\-\-json]
+.SH DESCRIPTION
+Manages keys for onion services. This command allows you to list, check integrity, remove, destroy, and recreate keys.
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Show help information.
+.TP
+.B \-\-json
+Output the result in JSON format for machine readability.
+.SH EXAMPLES
+.B keys list --keystore /path/to/keystore
+.B keys destroy --confirm
+.SH AUTHOR
+Written by Shaurya Gaur.

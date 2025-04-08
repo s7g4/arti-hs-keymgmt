@@ -188,14 +188,13 @@ anyhow = "1.0.23"
 rand = "0.9"
 strum = { version = "0.26.3", features = ["derive"] }
 tempfile = "3.3"
-tokio-crate = { package = "tokio", version = "1.7", features = [
-    "rt",
-    "rt-multi-thread",
-    "io-util",
-    "net",
-    "time",
-    "macros",
-] }
+tokio = { version = "1", features = ["full"] }
+    "rt" = "0.1",
+    "rt-multi-thread" = "0.1",
+    "io-util" = "0.1",
+    "net" = "0.1",
+    "time" = "0.1",
+    "macros" = "0.1"
 toml = "0.8.8"
 tor-relay-selection = { path = "../tor-relay-selection", version = "0.28.0" }
 tor-rtcompat = { path = "../tor-rtcompat", version = "0.28.0", features = ["tokio", "native-tls"] }

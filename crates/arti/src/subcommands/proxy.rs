@@ -8,7 +8,8 @@ use clap::ArgMatches;
 use tor_config_path::CfgPathResolver;
 use tracing::{info, warn};
 
-use arti_client::TorClientConfig;
+use arti_client::TorClientConfig; // Import the TorClientConfig
+use crate::c_tor_functions::connect_to_tor; // Import the connect_to_tor function
 use tor_config::{ConfigurationSources, Listen};
 use tor_rtcompat::ToplevelRuntime;
 
@@ -26,7 +27,7 @@ use crate::onion_proxy;
 type PinnedFuture<T> = std::pin::Pin<Box<dyn futures::Future<Output = T>>>;
 
 /// Run the `proxy` subcommand.
-pub(crate) fn run<R: ToplevelRuntime>(
+pub(crate) async fn run<R: ToplevelRuntime>(
     runtime: R,
     proxy_matches: &ArgMatches,
     cfg_sources: ConfigurationSources,
@@ -36,16 +37,26 @@ pub(crate) fn run<R: ToplevelRuntime>(
     // Override configured SOCKS and DNS listen addresses from the command line.
     // This implies listening on localhost ports.
     let socks_listen = match proxy_matches.get_one::<String>("socks-port") {
-        Some(p) => Listen::new_localhost(p.parse().expect("Invalid port specified")),
+        Some(p) => {
+            let client = TorClient::with_runtime(runtime.clone()).config(client_config.clone()).create_unbootstrapped_async().await?;
+            connect_to_tor(&client, p, 1080).await.context("Failed to connect to SOCKS port")?; // Connect to the SOCKS port
+            Listen::new_localhost(p.parse().expect("Invalid port specified"))
+        },
+        None => config.proxy().socks_listen.clone(),
         None => config.proxy().socks_listen.clone(),
     };
 
     let dns_listen = match proxy_matches.get_one::<String>("dns-port") {
-        Some(p) => Listen::new_localhost(p.parse().expect("Invalid port specified")),
+        Some(p) => {
+            let client = TorClient::with_runtime(runtime.clone()).config(client_config.clone()).create_unbootstrapped_async().await?;
+            connect_to_tor(&client, p, 53).await.context("Failed to connect to DNS port")?; // Connect to the DNS port
+            Listen::new_localhost(p.parse().expect("Invalid port specified"))
+        },
+        None => config.proxy().dns_listen.clone(),
         None => config.proxy().dns_listen.clone(),
     };
 
-    if !socks_listen.is_empty() {
+    if !socks_listen.is_empty() && !dns_listen.is_empty() {
         info!(
             "Starting Arti {} in SOCKS proxy mode on {} ...",
             env!("CARGO_PKG_VERSION"),

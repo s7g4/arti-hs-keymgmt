@@ -250,9 +250,6 @@ mod key {
 pub(crate) use specifier::*;
 
 #[cfg(test)]
-pub(crate) use key::*;
-
-#[cfg(test)]
 pub(crate) use internal::assert_found;
 
 /// Private module for reexporting test helper macros macro.

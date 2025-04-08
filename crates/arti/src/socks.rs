@@ -24,7 +24,8 @@ use tor_rpcbase::{self as rpc};
 use tor_rtcompat::{NetStreamListener, Runtime};
 use tor_socksproto::{Handshake as _, SocksAddr, SocksAuth, SocksCmd, SocksRequest, SOCKS_BUF_LEN};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Context, Result}; 
+use crate::c_tor_functions::{connect_to_tor}; // Import the new C-based functions
 
 use crate::rpc::RpcProxySupport;
 
@@ -517,7 +518,7 @@ where
             // The SOCKS request wants us to connect to a given address.
             // So, launch a connection over Tor.
             let tor_addr = (addr.clone(), port).into_tor_addr()?;
-            let tor_stream = tor_client.connect_with_prefs(&tor_addr, &prefs).await;
+            let tor_stream = connect_to_tor(&tor_client, &addr, port).await; // Use the new function to connect
             let tor_stream = match tor_stream {
                 Ok(s) => s,
                 Err(e) => return reply_error(&mut socks_stream, &request, e.kind()).await,

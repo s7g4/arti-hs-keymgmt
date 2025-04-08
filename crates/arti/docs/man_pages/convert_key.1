@@ -1,0 +1,20 @@
+.\" Manpage for convert_key
+.TH CONVERT_KEY 1 "October 2023" "1.0" "Convert C Tor Keys to Arti Format"
+.SH NAME
+convert_key \- Convert legacy C Tor keystores to Arti format
+.SH SYNOPSIS
+.B convert_key
+[\-h] [\-\-json] <c_tor_keystore_path> <arti_keystore_path>
+.SH DESCRIPTION
+Converts legacy C Tor keystores to the Arti format. This tool reads old C Tor key formats, converts them, and writes the new keys to the specified Arti keystore path.
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Show help information.
+.TP
+.B \-\-json
+Output the result in JSON format for machine readability.
+.SH EXAMPLES
+.B convert_key /path/to/c_tor_keystore /path/to/arti_keystore
+.SH AUTHOR
+Written by Shaurya Gaur.

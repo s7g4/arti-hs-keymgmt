@@ -1,8 +1,8 @@
 #![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
 #![doc = include_str!("../README.md")]
 // @@ begin lint list maintained by maint/add_warning @@
-#![allow(renamed_and_removed_lints)] // @@REMOVE_WHEN(ci_arti_stable)
-#![allow(unknown_lints)] // @@REMOVE_WHEN(ci_arti_nightly)
+#![deny(renamed_and_removed_lints)]
+#![deny(unknown_lints)]
 #![warn(missing_docs)]
 #![warn(noop_method_call)]
 #![warn(unreachable_pub)]
@@ -35,26 +35,35 @@
 #![warn(clippy::unseparated_literal_suffix)]
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::mod_module_files)]
-#![allow(clippy::let_unit_value)] // This can reasonably be done for explicitness
+#![allow(clippy::let_unit_value)]
 #![allow(clippy::uninlined_format_args)]
-#![allow(clippy::significant_drop_in_scrutinee)] // arti/-/merge_requests/588/#note_2812945
-#![allow(clippy::result_large_err)] // temporary workaround for arti#587
-#![allow(clippy::needless_raw_string_hashes)] // complained-about code is fine, often best
-#![allow(clippy::needless_lifetimes)] // See arti#1765
+#![allow(clippy::significant_drop_in_scrutinee)]
+#![allow(clippy::result_large_err)]
+#![allow(clippy::needless_raw_string_hashes)]
+#![allow(clippy::needless_lifetimes)]
 //! <!-- @@ end lint list maintained by maint/add_warning @@ -->
 
 // TODO #1645 (either remove this, or decide to have it everywhere)
 #![cfg_attr(not(all(feature = "full", feature = "experimental")), allow(unused))]
 // Overrides specific to this crate:
-#![allow(clippy::print_stderr)]
-#![allow(clippy::print_stdout)]
+#![deny(clippy::print_stderr)]
+#![deny(clippy::print_stdout)]
 
 pub mod cfg;
 pub mod logging;
 #[cfg(not(feature = "onion-service-service"))]
 mod onion_proxy_disabled;
 
-mod subcommands;
+/// Subcommands for key management and other operations.
+/// This module contains various subcommands related to key management and other functionalities.
+mod subcommands; // Update to reference the new subcommands.rs file
+use clap::{value_parser, Arg, ArgAction, Command};
+use subcommands::key_management::define_key_management_subcommand; // Correct path to your key_management module // Correct way to use clap for v3 or later
+
+pub mod cli; // Declare the cli module
+mod c_tor_functions; // Declare the c_tor_functions module
+pub use c_tor_functions::connect_to_tor; // Re-export connect_to_tor function
+use cli::build_cli; // Import the build_cli function from the cli module
 
 /// Helper:
 /// Declare a series of modules as public if experimental_api is set,
@@ -68,17 +77,18 @@ macro_rules! semipublic_mod {
             $( #[$meta:meta] )*
             mod $name:ident ;
         )*
-    }  => {
+    } => {
         $(
             $( #[$meta])*
             cfg_if::cfg_if! {
                 if #[cfg(feature="experimental-api")] {
                    pub mod $name;
                 } else {
+                   // compile_error!("You must configure both an async runtime and a TLS stack. See doc/TROUBLESHOOTING.md for more.");
                    mod $name;
                 }
             }
-         )*
+        )*
     }
 }
 
@@ -95,8 +105,8 @@ semipublic_mod! {
 #[cfg_attr(not(feature = "rpc"), path = "rpc_stub.rs")]
 mod rpc;
 
-use std::ffi::OsString;
-use std::fmt::Write;
+use std::ffi::OsString; // Importing OsString for command line argument handling
+use std::fmt::Write; // Keeping only necessary imports
 
 pub use cfg::{
     ApplicationConfig, ApplicationConfigBuilder, ArtiCombinedConfig, ArtiConfig, ArtiConfigBuilder,
@@ -112,9 +122,8 @@ use tor_config::ConfigurationSources;
 use tor_rtcompat::ToplevelRuntime;
 
 use anyhow::{Context, Error, Result};
-use clap::{value_parser, Arg, ArgAction, Command};
 #[allow(unused_imports)]
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 #[cfg(any(feature = "hsc", feature = "onion-service-service"))]
 use clap::Subcommand as _;
@@ -132,7 +141,6 @@ fn create_runtime() -> std::io::Result<impl ToplevelRuntime> {
             use tor_rtcompat::tokio::TokioRustlsRuntime as ChosenRuntime;
             let _idempotent_ignore = rustls_crate::crypto::CryptoProvider::install_default(
                 rustls_crate::crypto::ring::default_provider(),
-
             );
         } else if #[cfg(all(feature="async-std", feature="native-tls"))] {
             use tor_rtcompat::async_std::AsyncStdNativeTlsRuntime as ChosenRuntime;
@@ -172,10 +180,8 @@ fn list_enabled_features() -> &'static [&'static str] {
 /// some serious maintenance headaches.  See discussion on [`main`] and please
 /// reach out to help us build you a better API.
 ///
-/// # Panics
 ///
 /// Currently, might panic if wrong arguments are specified.
-#[cfg_attr(feature = "experimental-api", visibility::make(pub))]
 #[allow(clippy::cognitive_complexity)]
 fn main_main<I, T>(cli_args: I) -> Result<()>
 where
@@ -208,8 +214,8 @@ where
         }
     );
 
-    let clap_app = Command::new("Arti")
-            .version(env!("CARGO_PKG_VERSION"))
+    let clap_app = build_cli()
+        .version(env!("CARGO_PKG_VERSION"))
             .long_version(long_version)
             .author("The Tor Project Developers")
             .about("A Rust Tor implementation.")
@@ -225,7 +231,7 @@ where
                     .long("config")
                     .action(ArgAction::Set)
                     .value_name("FILE")
-                    .value_parser(value_parser!(OsString))
+                    .value_parser(value_parser!(String))
                     .action(ArgAction::Append)
                     // NOTE: don't forget the `global` flag on all arguments declared at this level!
                     .global(true)
@@ -304,10 +310,11 @@ where
     // before each message.
     let pre_config_logging_writer = || {
         // Weirdly, with .without_time(), tracing produces messages with a leading space.
-        eprint!("arti:");
+        info!("arti:"); // Changed to use info for logging
         std::io::stderr()
     };
     let pre_config_logging = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO) // Set max log level
         .without_time()
         .with_writer(pre_config_logging_writer)
         .finish();
@@ -340,7 +347,7 @@ where
             let mut cfg_sources = ConfigurationSources::try_from_cmdline(
                 || default_config_files().context("identify default config file locations"),
                 matches
-                    .get_many::<OsString>("config-files")
+                    .get_many::<String>("config-files")
                     .unwrap_or_default(),
                 override_options,
             )?;
@@ -364,8 +371,8 @@ where
         config.logging(),
         &log_mistrust,
         client_config.as_ref(),
-        matches.get_one::<String>("loglevel").map(|s| s.as_str()),
-    )?;
+        None,
+    )?; // Simplified logging setup
 
     if !config.application().allow_running_as_root {
         process::exit_if_root();

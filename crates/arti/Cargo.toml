@@ -10,9 +10,6 @@ description = "A rust implementation of the Tor privacy tools."
 keywords = ["tor", "arti", "privacy", "anonymity"]
 categories = ["command-line-utilities", "cryptography"]
 repository = "https://gitlab.torproject.org/tpo/core/arti.git/"
-#
-# We need a runtime
-# @@ test-all-crates conditional-option minimal --features=default-runtime
 
 [features]
 default = [
@@ -24,6 +21,8 @@ default = [
     "pt-client",
     "onion-service-client",
     "vanguards",
+    "serde_json",
+    "tor-hsservice"
 ]
 
 full = [
@@ -44,6 +43,8 @@ full = [
     "pt-client",
     "arti-rpcserver?/full",
     "fs-mistrust/full",
+    "rpc",
+    "serde_json",
     "safelog/full",
     "tor-config/full",
     "tor-error/full",
@@ -51,7 +52,7 @@ full = [
     "tor-socksproto/full",
     "tor-rpcbase?/full",
     "tor-hsrproxy?/full",
-    "tor-hsservice?/full",
+    "tor-hsservice/full",
     "tor-async-utils/full",
     "tor-config-path/full", "tor-basic-utils/full", "tor-rpc-connect?/full",
 ]
@@ -73,12 +74,10 @@ hs-pow-full = ["arti-client/hs-pow-full", "__is_experimental"]
 pt-client = ["bridge-client", "arti-client/pt-client"]
 ctor-keystore = ["arti-client/ctor-keystore", "__is_experimental"]
 
-# This is not nonadditive from a software POV, but we mark it as such because it
-# includes code licensed under the old OpenSSL license (which was 4-clause BSD),
-# which in turn introduces a GPL-incompatibility.
+rpc = ["arti-rpcserver", "tor-rpcbase", "tor-rpc-connect", "derive-deftly"]
+
 rustls = ["arti-client/rustls", "tor-rtcompat/rustls", "rustls-crate", "__is_nonadditive"]
 
-# depends directly on arti-client/static so native-tls doesn't get automatically included
 static = ["arti-client/static", "__is_nonadditive"]
 static-sqlite = ["arti-client/static-sqlite", "__is_nonadditive"]
 static-native-tls = ["arti-client/static-native-tls", "native-tls", "__is_nonadditive"]
@@ -91,26 +90,24 @@ __is_nonadditive = []
 
 compression = ["arti-client/compression"]
 
-# This feature flag enables experimental features that are not supported. Turning it on may
-# void your API.
 experimental = [
     "arti-client/experimental",
     "experimental-api",
     "hs-pow-full",
     "keymgr",
     "restricted-discovery",
-    "rpc",
     "hsc",
     "tor-hsservice/experimental",
     "ctor-keystore",
 ]
-rpc = ["arti-rpcserver", "tor-rpcbase", "tor-rpc-connect", "derive-deftly", "__is_experimental"]
 
 restricted-discovery = ["tor-hsservice/restricted-discovery", "__is_experimental"]
 hsc = ["onion-service-client", "experimental-api", "keymgr", "__is_experimental", "dialoguer"]
 __is_experimental = []
 
 [dependencies]
+tokio = { version = "1", features = ["full"] }
+
 anyhow = "1.0.23"
 arti-client = { package = "arti-client", path = "../arti-client", version = "0.28.0", default-features = false, features = [
     "anyhow",
@@ -141,6 +138,7 @@ rustls-crate = { package = "rustls", version = "0.23.5", optional = true, defaul
 safelog = { path = "../safelog", version = "0.4.2" }
 secmem-proc = { version = "0.3.4", optional = true }
 serde = { version = "1.0.103", features = ["derive"] }
+serde_json = { version = "1.0" , optional = true }
 signal-hook = { version = "0.3", optional = true }
 signal-hook-async-std = { version = "0.2", optional = true }
 thiserror = "2"
@@ -186,3 +184,8 @@ trycmd = "0.15.4"
 winapi = { version = "0.3.8", features = ["winerror"] }
 [package.metadata.docs.rs]
 all-features = true
+
+members = [
+    "crates/arti",
+    "crates/tor-hsservice"
+]

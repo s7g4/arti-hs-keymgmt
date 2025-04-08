@@ -3,8 +3,8 @@
 //! See the [crate-level documentation](::arti).
 
 // @@ begin lint list maintained by maint/add_warning @@
-#![allow(renamed_and_removed_lints)] // @@REMOVE_WHEN(ci_arti_stable)
-#![allow(unknown_lints)] // @@REMOVE_WHEN(ci_arti_nightly)
+#![allow(renamed_and_removed_lints)] // @@REMOVE WHEN(ci_arti_stable)
+#![allow(unknown_lints)] // @@REMOVE WHEN(ci_arti_nightly)
 #![warn(missing_docs)]
 #![warn(noop_method_call)]
 #![warn(unreachable_pub)]
@@ -44,7 +44,30 @@
 #![allow(clippy::needless_raw_string_hashes)] // complained-about code is fine, often best
 #![allow(clippy::needless_lifetimes)] // See arti#1765
 //! <!-- @@ end lint list maintained by maint/add_warning @@ -->
+use clap::Command; // Import value_parser
+use tracing::info; // Import logging macro from tracing
+use tracing_subscriber; // Import tracing_subscriber for setting up logging
+
+mod key_management; // Ensure the module is declared
+mod subcommands; // Assuming you have a module named subcommands
 
 fn main() {
-    arti::main();
+    // Initialize the logger
+    env_logger::init(); // Initialize the logger
+    tracing_subscriber::fmt::init(); // Initialize the tracing subscriber
+
+    // Define the main CLI application
+    let matches = Command::new("Arti")
+        .version("1.0")
+        .author("The Tor Project")
+        .about("A Rust implementation of Tor")
+        .subcommand(key_management::define_key_management_subcommand()) // Register the key-management subcommand
+        .get_matches();
+
+    // Handle the subcommands here
+    if let Some(matches) = matches.subcommand_matches("keys") {
+        key_management::handle_key_management(matches); // Call the key management handler
+    } else {
+        eprintln!("Error: Unrecognized subcommand");
+    }
 }

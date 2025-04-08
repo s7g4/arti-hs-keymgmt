@@ -280,7 +280,7 @@ impl<R: Runtime> TorClientBuilder<R> {
     /// Create a TorClient from this builder, and try to bootstrap it.
     pub async fn create_bootstrapped(&self) -> Result<TorClient<R>> {
         let r = self.create_unbootstrapped_async().await?;
-        r.bootstrap().await?;
+        r.bootstrap();
         Ok(r)
     }
 

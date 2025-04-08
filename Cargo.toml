@@ -10,6 +10,7 @@
 # see
 # https://blog.iany.me/2020/10/gotchas-to-publish-rust-crates-in-a-workspace/#cyclic-dependencies
 members = [
+    "crates/arti",
     "crates/oneshot-fused-workaround",
     "crates/slotmap-careful",
     "crates/test-temp-dir",
@@ -47,7 +48,6 @@ members = [
     "crates/tor-cell",
     "crates/tor-proto",
     "crates/tor-netdoc",
-    "crates/tor-consdiff",
     "crates/tor-netdir",
     "crates/tor-relay-selection",
     "crates/tor-persist",
@@ -88,31 +88,14 @@ members = [
 resolver = "2"
 
 [profile.release]
-# By default we'd like to get good performance and a small download size.
-# (Assuming xz compression on the binary.)
-#
-# The biggest win is to run `strip --strip-debug` on the binary after
-# generating it, to throw out debugging symbols that we inherited from
-# other libraries.  Don't do `strip --strip-unused`, though, or you'll
-# break backtraces.  That saves about 21% download size.
-
-# Using LTO saves a further 14% of download size, and improves performance,
-# at the cost of compile time.
 lto = true
-# Setting codegen-units=1 saves a further 7% download size.  It also
-# improves performance at the cost of compile time.
 codegen-units = 1
-# Optimize for size.  [Actually this is even smaller than 'z' on rust
-# 1.56.  It saves about 11% download size over the default value of '3'.]
 opt-level = 's'
 
 [profile.release.package.slotmap-careful]
 opt-level = 2
 
 [profile.quicktest]
-# This profile is meant to be a compromise between "release" (which
-# takes a long time to build) and "dev" (which can be too slow to actually
-# use when connecting over the Tor network).
 inherits = "release"
 lto = "thin"
 codegen-units = 16
@@ -120,7 +103,5 @@ opt-level = 2
 incremental = true
 
 [profile.bench]
-# For "cargo bench", which is only used by some crates.
-# Inherits release build settings, but adds full debug symbols.
 debug = 2
 strip = "none"

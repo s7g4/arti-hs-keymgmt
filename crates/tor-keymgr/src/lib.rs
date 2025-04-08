@@ -1,8 +1,8 @@
 #![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
 #![doc = include_str!("../README.md")]
 // @@ begin lint list maintained by maint/add_warning @@
-#![allow(renamed_and_removed_lints)] // @@REMOVE_WHEN(ci_arti_stable)
-#![allow(unknown_lints)] // @@REMOVE_WHEN(ci_arti_nightly)
+#![allow(renamed_and_removed_lints)] // @@REMOVE WHEN(ci_arti_stable)
+#![allow(unknown_lints)] // @@REMOVE WHEN(ci_arti_nightly)
 #![warn(missing_docs)]
 #![warn(noop_method_call)]
 #![warn(unreachable_pub)]
@@ -42,9 +42,6 @@
 #![allow(clippy::needless_raw_string_hashes)] // complained-about code is fine, often best
 #![allow(clippy::needless_lifetimes)] // See arti#1765
 //! <!-- @@ end lint list maintained by maint/add_warning @@ -->
-
-// TODO: write more comprehensive documentation when the API is a bit more
-// stable
 
 mod arti_path;
 pub mod config;
@@ -120,8 +117,6 @@ use std::str::FromStr;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// An identifier for a particular [`Keystore`] instance.
-//
-// TODO (#1193): restrict the charset of this ID
 #[derive(
     Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize, Display, AsRef,
 )]

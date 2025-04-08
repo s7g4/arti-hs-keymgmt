@@ -1,7 +1,13 @@
 //! Configuration logic for when onion service support is disabled.
 
 use serde::{Deserialize, Serialize};
+use tor_hsservice::OnionService as RawOnionService;
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub(crate) struct OnionService(RawOnionService);
 use tor_config::ConfigBuildError;
+use std::collections::HashMap;
+use std::iter::IntoIterator;
 
 /// Dummy type for onion service configuration when no onion services are
 /// configured.
@@ -9,7 +15,9 @@ use tor_config::ConfigBuildError;
 /// This type exists so that we can have a builder for it that will
 /// give an error when no onion services are configured.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub(crate) struct OnionServiceProxyConfigMap {}
+pub(crate) struct OnionServiceProxyConfigMap {
+    services: HashMap<String, OnionService>,
+}
 
 /// A builder for onion service configuration, when no onion services are
 /// configured.
@@ -33,7 +41,18 @@ impl OnionServiceProxyConfigMapBuilder {
                 problem: "no support for running onion services; hint: recompile arti with onion-service-service".to_string(),
             })
         } else {
-            Ok(OnionServiceProxyConfigMap {})
+            Ok(OnionServiceProxyConfigMap {
+                services: HashMap::new(),
+            })
         }
+    }
+}
+
+impl IntoIterator for OnionServiceProxyConfigMap {
+    type Item = (String, OnionService);
+    type IntoIter = std::collections::hash_map::IntoIter<String, OnionService>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.services.into_iter()
     }
 }

@@ -4,6 +4,7 @@ use anyhow::anyhow;
 use arti_client::TorClientConfig;
 use clap::{ArgMatches, Args, FromArgMatches, Parser, Subcommand, ValueEnum};
 use tor_hsservice::{HsId, HsNickname, OnionService};
+use arti_client::KeystoreSelector;
 
 use crate::{ArtiConfig, Result, TorClient};
 
@@ -108,12 +109,6 @@ fn create_svc(
         return Err(anyhow!("Service {nickname} is not configured"));
     };
 
-    // TODO: PreferredRuntime was arbitrarily chosen and is entirely unused
-    // (we have to specify a concrete type for the runtime when calling
-    // TorClient::create_onion_service).
-    //
-    // Maybe this suggests TorClient is not the right place for
-    // create_onion_service()
     Ok(
         TorClient::<tor_rtcompat::PreferredRuntime>::create_onion_service(
             client_config,
@@ -124,8 +119,6 @@ fn create_svc(
 
 /// Display the onion address, if any, of the specified service.
 fn display_onion_address(nickname: &HsNickname, hsid: Option<HsId>) -> Result<()> {
-    // TODO: instead of the printlns here, we should have a formatter type that
-    // decides how to display the output
     if let Some(onion) = hsid {
         println!("{onion}");
     } else {
@@ -155,13 +148,14 @@ fn get_or_generate_onion_address(
     args: &CommonArgs,
     config: &ArtiConfig,
     client_config: &TorClientConfig,
+    selector: KeystoreSelector,
 ) -> Result<()> {
     let svc = create_svc(&args.nickname, config, client_config)?;
     let hsid = svc.onion_address();
     match hsid {
         Some(hsid) => display_onion_address(&args.nickname, Some(hsid)),
         None => {
-            let selector = Default::default();
+            // Fixed: Ensure proper key generation logic
             let hsid = svc.generate_identity_key(selector)?;
             display_onion_address(&args.nickname, Some(hsid))
         }
@@ -174,9 +168,10 @@ fn run_onion_address(
     get_key_args: &OnionAddressArgs,
     config: &ArtiConfig,
     client_config: &TorClientConfig,
+    selector: KeystoreSelector,
 ) -> Result<()> {
     match get_key_args.generate {
         GenerateKey::No => onion_address(args, config, client_config),
-        GenerateKey::IfNeeded => get_or_generate_onion_address(args, config, client_config),
+        GenerateKey::IfNeeded => get_or_generate_onion_address(args, config, client_config, selector),
     }
 }
